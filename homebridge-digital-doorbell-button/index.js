@@ -1,8 +1,13 @@
 'use strict';
 
+const http = require('node:http');
+
 const PLUGIN_NAME = 'homebridge-digital-doorbell-button';
 const PLATFORM_NAME = 'DigitalDoorbellBridge';
 const DEFAULT_AUTO_OFF_MS = 1000;
+const DEFAULT_WEBHOOK_HOST = '0.0.0.0';
+const DEFAULT_WEBHOOK_PORT = 51849;
+const DEFAULT_WEBHOOK_PATH = '/doorbell/ring';
 const SINGLE_PRESS_EVENT = 0;
 
 module.exports = (api) => {
@@ -14,13 +19,14 @@ class DigitalDoorbellPlatform {
     this.log = log;
     this.config = config || {};
     this.api = api;
+    this.bridge = new VirtualDoorbellBridge(this.log, this.api.hap, this.config);
   }
 
   accessories(callback) {
-    const bridge = new VirtualDoorbellBridge(this.log, this.api.hap, this.config);
+    this.bridge.startWebhookServer();
     callback([
-      bridge.createButtonAccessory(),
-      bridge.createDoorbellAccessory(),
+      this.bridge.createButtonAccessory(),
+      this.bridge.createDoorbellAccessory(),
     ]);
   }
 }
@@ -36,8 +42,13 @@ class VirtualDoorbellBridge {
     this.model = config.model || 'Virtual Doorbell Button';
     this.serialBase = config.serialBase || 'digital-doorbell';
     this.autoOffMilliseconds = normalizeAutoOffMilliseconds(config.autoOffMilliseconds);
+    this.webhookEnabled = config.webhookEnabled !== false;
+    this.webhookHost = normalizeWebhookHost(config.webhookHost);
+    this.webhookPort = normalizeWebhookPort(config.webhookPort);
+    this.webhookPath = normalizeWebhookPath(config.webhookPath);
     this.buttonAccessory = null;
     this.doorbellAccessory = null;
+    this.webhookServer = null;
   }
 
   createButtonAccessory() {
@@ -71,6 +82,51 @@ class VirtualDoorbellBridge {
     if (this.doorbellAccessory) {
       this.doorbellAccessory.ring();
     }
+  }
+
+  startWebhookServer() {
+    if (!this.webhookEnabled || this.webhookServer) {
+      return;
+    }
+
+    this.webhookServer = http.createServer((request, response) => {
+      this.handleWebhookRequest(request, response);
+    });
+
+    this.webhookServer.on('error', (error) => {
+      this.log.error('Doorbell webhook server error: %s', error.message);
+    });
+
+    this.webhookServer.listen(this.webhookPort, this.webhookHost, () => {
+      const displayHost = this.webhookHost === '0.0.0.0' ? 'localhost' : this.webhookHost;
+      this.log.info(
+        'Doorbell webhook listening on http://%s:%s%s',
+        displayHost,
+        this.webhookPort,
+        this.webhookPath,
+      );
+    });
+  }
+
+  handleWebhookRequest(request, response) {
+    const requestURL = new URL(request.url || '/', `http://${request.headers.host || 'localhost'}`);
+    const isSupportedMethod = request.method === 'POST' || request.method === 'GET';
+
+    if (!isSupportedMethod || requestURL.pathname !== this.webhookPath) {
+      respondWithJSON(response, 404, { ok: false, error: 'not_found' });
+      return;
+    }
+
+    request.on('data', () => {});
+    request.on('end', () => {
+      const source = request.socket.remoteAddress || 'webhook';
+      this.triggerDoorbell(`Webhook ${source}`);
+      respondWithJSON(response, 202, {
+        ok: true,
+        event: 'ring',
+        forwardedToHomeKit: true,
+      });
+    });
   }
 }
 
@@ -178,3 +234,30 @@ function normalizeAutoOffMilliseconds(value) {
   return Math.round(numericValue);
 }
 
+function normalizeWebhookHost(value) {
+  const host = String(value || '').trim();
+  return host || DEFAULT_WEBHOOK_HOST;
+}
+
+function normalizeWebhookPort(value) {
+  const numericValue = Number(value);
+  if (!Number.isInteger(numericValue) || numericValue < 1 || numericValue > 65535) {
+    return DEFAULT_WEBHOOK_PORT;
+  }
+
+  return numericValue;
+}
+
+function normalizeWebhookPath(value) {
+  const path = String(value || '').trim();
+  if (!path) {
+    return DEFAULT_WEBHOOK_PATH;
+  }
+
+  return path.startsWith('/') ? path : `/${path}`;
+}
+
+function respondWithJSON(response, statusCode, payload) {
+  response.writeHead(statusCode, { 'Content-Type': 'application/json' });
+  response.end(JSON.stringify(payload));
+}

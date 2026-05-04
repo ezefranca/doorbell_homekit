@@ -1,6 +1,10 @@
 # ESP8266 HomeKit Doorbell
 
-Minimal HomeKit doorbell firmware for ESP8266, plus a separate Homebridge plugin for a digital Home app trigger.
+Doorbell project with three parts:
+
+- native ESP8266 HomeKit firmware
+- a native iOS camera-and-button companion app
+- a Homebridge plugin that exposes the digital doorbell to HomeKit and accepts webhook triggers from the iOS app
 
 Full combined documentation is in [SYSTEM_GUIDE.md](SYSTEM_GUIDE.md).
 
@@ -9,16 +13,15 @@ Full combined documentation is in [SYSTEM_GUIDE.md](SYSTEM_GUIDE.md).
 - Primary sketch: [doorbell_homekit.ino](doorbell_homekit.ino)
 - Wi-Fi config and reconnect logic: [wifi_info.h](wifi_info.h)
 - HomeKit accessory definition: [my_accessory.c](my_accessory.c)
+- Native iOS companion app: [iOS](iOS/)
 - Homebridge plugin: [homebridge-digital-doorbell-button](homebridge-digital-doorbell-button/)
 
 ## What it does
 
-- Connects an ESP8266 to Wi-Fi
-- Exposes one HomeKit accessory with the `DOORBELL` service
-- Sends a `PROGRAMMABLE_SWITCH_EVENT` single-press event whenever the button is pressed
-- Restarts the ESP after Wi-Fi reconnects so HomeKit is advertised again
-- Automatically clears old HomeKit pairing data on the first boot after upload, then restarts once
-- Clears stored HomeKit pairing data if the button is held for 10 seconds
+- The ESP8266 firmware exposes a direct HomeKit doorbell accessory
+- The iOS app shows a full-screen live camera preview with a ring button
+- The Homebridge plugin exposes a virtual HomeKit doorbell and accepts webhook-triggered ring events
+- The firmware and app intentionally use different video/button paths
 
 For the full firmware + Homebridge + Home app setup flow, use [SYSTEM_GUIDE.md](SYSTEM_GUIDE.md).
 
