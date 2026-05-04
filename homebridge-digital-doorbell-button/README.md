@@ -13,8 +13,8 @@ This gives you a "digital doorbell button" inside the Home app for testing or ma
 
 ## Folder
 
-- Plugin root: [homebridge-digital-doorbell-button](/Users/ezequiel.santos/Documents/Arduino/doorbell_homekit/homebridge-digital-doorbell-button)
-- Full system documentation: [SYSTEM_GUIDE.md](/Users/ezequiel.santos/Documents/Arduino/doorbell_homekit/SYSTEM_GUIDE.md)
+- Plugin root: [homebridge-digital-doorbell-button](.)
+- Full system documentation: [SYSTEM_GUIDE.md](../SYSTEM_GUIDE.md)
 
 ## Install for local development
 
@@ -22,12 +22,24 @@ This gives you a "digital doorbell button" inside the Home app for testing or ma
 2. Link the plugin into your Homebridge environment:
 
 ```bash
+git clone https://github.com/ezefranca/doorbell_homekit.git
+cd doorbell_homekit/homebridge-digital-doorbell-button
 npm link
 ```
 
 3. Restart Homebridge.
 
 Homebridge's developer docs recommend `npm link` for loading a plugin from a development directory instead of publishing it first.
+
+## Install from the GitHub repo without `npm link`
+
+If you prefer a direct install:
+
+```bash
+git clone https://github.com/ezefranca/doorbell_homekit.git
+cd doorbell_homekit
+sudo npm install --location=global ./homebridge-digital-doorbell-button
+```
 
 ## Example `config.json`
 

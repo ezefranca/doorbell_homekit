@@ -5,6 +5,14 @@
   "private": true,
   "description": "A minimal Homebridge plugin that exposes a tappable switch tile and a matching virtual doorbell accessory.",
   "main": "index.js",
+  "homepage": "https://github.com/ezefranca/doorbell_homekit/tree/main/homebridge-digital-doorbell-button#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ezefranca/doorbell_homekit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ezefranca/doorbell_homekit/issues"
+  },
   "keywords": [
     "homebridge-plugin",
     "homebridge",
@@ -20,4 +28,3 @@
   },
   "license": "Apache-2.0"
 }
-

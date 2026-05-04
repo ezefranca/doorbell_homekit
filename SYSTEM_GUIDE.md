@@ -18,12 +18,12 @@ Important:
 
 ## Repository Layout
 
-- Firmware guide and quick start: [README.md](/Users/ezequiel.santos/Documents/Arduino/doorbell_homekit/README.md)
-- Combined system guide: [SYSTEM_GUIDE.md](/Users/ezequiel.santos/Documents/Arduino/doorbell_homekit/SYSTEM_GUIDE.md)
-- ESP8266 sketch: [doorbell_homekit.ino](/Users/ezequiel.santos/Documents/Arduino/doorbell_homekit/doorbell_homekit.ino)
-- ESP8266 Wi-Fi helper: [wifi_info.h](/Users/ezequiel.santos/Documents/Arduino/doorbell_homekit/wifi_info.h)
-- ESP8266 HomeKit accessory definition: [my_accessory.c](/Users/ezequiel.santos/Documents/Arduino/doorbell_homekit/my_accessory.c)
-- Homebridge plugin: [homebridge-digital-doorbell-button](/Users/ezequiel.santos/Documents/Arduino/doorbell_homekit/homebridge-digital-doorbell-button)
+- Firmware guide and quick start: [README.md](README.md)
+- Combined system guide: [SYSTEM_GUIDE.md](SYSTEM_GUIDE.md)
+- ESP8266 sketch: [doorbell_homekit.ino](doorbell_homekit.ino)
+- ESP8266 Wi-Fi helper: [wifi_info.h](wifi_info.h)
+- ESP8266 HomeKit accessory definition: [my_accessory.c](my_accessory.c)
+- Homebridge plugin: [homebridge-digital-doorbell-button](homebridge-digital-doorbell-button/)
 
 ## Component Summary
 
@@ -156,8 +156,15 @@ https://github.com/Mixiaoxiao/Arduino-HomeKit-ESP8266/archive/refs/heads/master.
 
 ### Configure the Firmware
 
+Get the code first:
+
+```bash
+git clone https://github.com/ezefranca/doorbell_homekit.git
+cd doorbell_homekit
+```
+
 1. Open this folder in Arduino IDE.
-2. Open [wifi_info.h](/Users/ezequiel.santos/Documents/Arduino/doorbell_homekit/wifi_info.h).
+2. Open [wifi_info.h](wifi_info.h).
 3. Set:
 
 ```cpp
@@ -179,7 +186,7 @@ Set these in `Tools`:
 ### Upload the Firmware
 
 1. Select the correct serial port.
-2. Upload [doorbell_homekit.ino](/Users/ezequiel.santos/Documents/Arduino/doorbell_homekit/doorbell_homekit.ino).
+2. Upload [doorbell_homekit.ino](doorbell_homekit.ino).
 3. Open `Tools > Serial Monitor`.
 4. Set baud rate to `115200`.
 
@@ -256,14 +263,15 @@ Once the bridge is added, Homebridge accessories appear in Home automatically.
 
 Plugin folder:
 
-- [homebridge-digital-doorbell-button](/Users/ezequiel.santos/Documents/Arduino/doorbell_homekit/homebridge-digital-doorbell-button)
+- [homebridge-digital-doorbell-button](homebridge-digital-doorbell-button/)
 
 ### Option A: Local Development Install with `npm link`
 
 Use this when the plugin lives in your local repo and you want Homebridge to load it directly from the folder.
 
 ```bash
-cd /Users/ezequiel.santos/Documents/Arduino/doorbell_homekit/homebridge-digital-doorbell-button
+git clone https://github.com/ezefranca/doorbell_homekit.git
+cd doorbell_homekit/homebridge-digital-doorbell-button
 npm link
 ```
 
@@ -274,7 +282,9 @@ Then restart Homebridge.
 If you prefer a direct local install instead of linking:
 
 ```bash
-sudo npm install --location=global /Users/ezequiel.santos/Documents/Arduino/doorbell_homekit/homebridge-digital-doorbell-button
+git clone https://github.com/ezefranca/doorbell_homekit.git
+cd doorbell_homekit
+sudo npm install --location=global ./homebridge-digital-doorbell-button
 ```
 
 Then restart Homebridge.
@@ -356,7 +366,7 @@ and verify that Homebridge can see the plugin package.
 If using local development mode, run:
 
 ```bash
-cd /Users/ezequiel.santos/Documents/Arduino/doorbell_homekit/homebridge-digital-doorbell-button
+cd doorbell_homekit/homebridge-digital-doorbell-button
 npm link
 ```
 
