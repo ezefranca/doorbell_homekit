@@ -1,0 +1,23 @@
+{
+  "name": "homebridge-digital-doorbell-button",
+  "displayName": "Digital Doorbell Button",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A minimal Homebridge plugin that exposes a tappable switch tile and a matching virtual doorbell accessory.",
+  "main": "index.js",
+  "keywords": [
+    "homebridge-plugin",
+    "homebridge",
+    "homekit",
+    "doorbell"
+  ],
+  "engines": {
+    "node": ">=18.0.0",
+    "homebridge": "^1.8.0 || ^2.0.0"
+  },
+  "peerDependencies": {
+    "homebridge": "^1.8.0 || ^2.0.0"
+  },
+  "license": "Apache-2.0"
+}
+

@@ -1,0 +1,52 @@
+{
+  "pluginAlias": "DigitalDoorbellBridge",
+  "pluginType": "platform",
+  "singular": true,
+  "strictValidation": false,
+  "schema": {
+    "type": "object",
+    "required": [
+      "name"
+    ],
+    "additionalProperties": false,
+    "properties": {
+      "name": {
+        "title": "Base Name",
+        "type": "string",
+        "default": "Digital Doorbell"
+      },
+      "buttonName": {
+        "title": "Button Accessory Name",
+        "type": "string",
+        "default": "Digital Doorbell Button"
+      },
+      "doorbellName": {
+        "title": "Doorbell Accessory Name",
+        "type": "string",
+        "default": "Digital Doorbell Doorbell"
+      },
+      "manufacturer": {
+        "title": "Manufacturer",
+        "type": "string",
+        "default": "Custom"
+      },
+      "model": {
+        "title": "Model",
+        "type": "string",
+        "default": "Virtual Doorbell Button"
+      },
+      "serialBase": {
+        "title": "Serial Base",
+        "type": "string",
+        "default": "digital-doorbell"
+      },
+      "autoOffMilliseconds": {
+        "title": "Button Auto-Off Milliseconds",
+        "type": "integer",
+        "default": 1000,
+        "minimum": 100
+      }
+    }
+  }
+}
+
