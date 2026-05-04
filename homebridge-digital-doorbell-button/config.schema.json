@@ -45,8 +45,29 @@
         "type": "integer",
         "default": 1000,
         "minimum": 100
+      },
+      "webhookEnabled": {
+        "title": "Enable Webhook",
+        "type": "boolean",
+        "default": true
+      },
+      "webhookHost": {
+        "title": "Webhook Host",
+        "type": "string",
+        "default": "0.0.0.0"
+      },
+      "webhookPort": {
+        "title": "Webhook Port",
+        "type": "integer",
+        "default": 51849,
+        "minimum": 1,
+        "maximum": 65535
+      },
+      "webhookPath": {
+        "title": "Webhook Path",
+        "type": "string",
+        "default": "/doorbell/ring"
       }
     }
   }
 }
-

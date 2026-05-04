@@ -1,20 +1,23 @@
 # Doorbell System Guide
 
-This repository now contains two separate HomeKit-related pieces:
+This repository now contains three related pieces:
 
 1. An ESP8266 firmware project that exposes a native HomeKit doorbell accessory.
-2. A Homebridge plugin that exposes a tappable digital button tile and a matching virtual doorbell.
+2. A native iOS app that shows a live camera view and a ring button.
+3. A Homebridge plugin that exposes a tappable digital button tile, a virtual doorbell accessory, and a webhook endpoint for the iOS app.
 
 They solve different problems:
 
 - The firmware gives you a direct HomeKit doorbell on the ESP8266.
-- The Homebridge plugin gives you a software-only button inside the Home app for testing or manual triggering.
+- The iOS app gives you a separate live video source and a digital ring surface.
+- The Homebridge plugin bridges the iOS app’s ring action into HomeKit.
 
 Important:
 
 - The ESP8266 firmware and the Homebridge plugin are separate accessories.
-- The plugin does not call the ESP8266 over HTTP or GPIO.
-- The user-facing effect is similar: both create a HomeKit doorbell press event.
+- The iOS app does not publish itself as a native HomeKit accessory on its own.
+- The Homebridge plugin does not call the ESP8266 over HTTP or GPIO.
+- The iOS app camera is intentionally separate from the ESP8266 video path.
 
 ## Repository Layout
 
@@ -23,6 +26,7 @@ Important:
 - ESP8266 sketch: [doorbell_homekit.ino](doorbell_homekit.ino)
 - ESP8266 Wi-Fi helper: [wifi_info.h](wifi_info.h)
 - ESP8266 HomeKit accessory definition: [my_accessory.c](my_accessory.c)
+- Native iOS app: [iOS](iOS/)
 - Homebridge plugin: [homebridge-digital-doorbell-button](homebridge-digital-doorbell-button/)
 
 ## Component Summary
@@ -42,7 +46,27 @@ Current behavior:
 - First boot after flashing -> clears old HomeKit pairing data once, then reboots.
 - If Wi-Fi reconnects later -> reboots once to re-advertise HomeKit, working around issue `#265`.
 
-### 2. Homebridge Plugin
+### 2. Native iOS App
+
+Purpose:
+
+- Runs as a normal SwiftUI iPhone or iPad app.
+- Uses the device camera as the live video feed.
+- Shows a large ring button over the live preview.
+- Can forward that ring action to Homebridge through a local webhook.
+
+Current behavior:
+
+- Open app -> live camera preview fills the screen.
+- Tap ring button -> local ring UI updates immediately.
+- If a Homebridge webhook URL is configured -> the app POSTs to the plugin, which triggers a HomeKit doorbell event.
+
+Important limitation:
+
+- A pure native iOS app can control HomeKit accessories, but it does not register itself as a new HomeKit doorbell accessory in the Home app.
+- That is why this repo uses Homebridge for HomeKit-facing digital doorbell integration.
+
+### 3. Homebridge Plugin
 
 Purpose:
 
@@ -50,11 +74,13 @@ Purpose:
 - Exposes:
   - one `Switch` tile you can tap in the Home app
   - one virtual `Doorbell` accessory
-- Turning on the switch tile triggers the virtual doorbell and then auto-resets the switch back to off.
+- accepts a local webhook from the iOS app
+- Turning on the switch tile or calling the webhook triggers the virtual doorbell and then auto-resets the switch back to off.
 
 Current behavior:
 
 - Tap switch tile in Home -> plugin triggers a doorbell event.
+- POST to webhook -> plugin triggers a doorbell event.
 - The plugin does not talk to the ESP8266 directly.
 
 ## Text Flow Diagram
@@ -80,21 +106,24 @@ Current behavior:
 [User sees / hears doorbell event in Home ecosystem]
 ```
 
-### Digital Doorbell Flow
+### App + HomeKit Flow
 
 ```text
-[User taps Home app switch tile]
+[User taps iOS app ring button]
             |
             v
-[Homebridge plugin receives Switch = ON]
+[iOS app uses device camera for live preview]
+            |
+            v
+[iOS app sends HTTP POST to Homebridge webhook]
+            |
+            v
+[Homebridge plugin receives webhook]
+            |
+            +-----------------------> [Plugin also supports a tappable Home switch tile]
             |
             v
 [Plugin triggers virtual Doorbell ProgrammableSwitchEvent = Single Press]
-            |
-            +-----------------------> [Plugin auto-resets switch tile to OFF]
-            |
-            v
-[Apple Home receives doorbell event]
             |
             v
 [User sees / hears doorbell event in Home ecosystem]
@@ -114,6 +143,10 @@ Current behavior:
 
                BRIDGED ACCESSORY PATH
 
+ [iOS App Camera + Ring Button]
+        |
+        | HTTP webhook
+        v
  [Homebridge Plugin]
         |
         | Homebridge bridge -> HomeKit
@@ -299,7 +332,11 @@ Add this to the `platforms` array in your Homebridge `config.json`:
   "name": "Digital Doorbell",
   "buttonName": "Digital Doorbell Button",
   "doorbellName": "Digital Doorbell Chime",
-  "autoOffMilliseconds": 1000
+  "autoOffMilliseconds": 1000,
+  "webhookEnabled": true,
+  "webhookHost": "0.0.0.0",
+  "webhookPort": 51849,
+  "webhookPath": "/doorbell/ring"
 }
 ```
 
@@ -315,6 +352,52 @@ When the switch tile is turned on:
 - Homebridge sends a single-press event to the virtual doorbell
 - the switch turns itself back off automatically
 
+When the webhook receives a request:
+
+- Homebridge sends the same single-press event to the virtual doorbell
+
+## iOS App Installation
+
+Folder:
+
+- [iOS](iOS/)
+
+### Generate the Xcode project
+
+If you already have the generated Xcode project in the repo, you can open it directly. Otherwise:
+
+```bash
+git clone https://github.com/ezefranca/doorbell_homekit.git
+cd doorbell_homekit/iOS
+tuist generate
+open DoorbellPanel.xcodeproj
+```
+
+### Configure the app
+
+1. Open the project in Xcode.
+2. Build and run on an iPhone or iPad.
+3. Allow camera access when prompted.
+4. Open the app’s settings sheet.
+5. Set the Homebridge webhook URL, for example:
+
+```text
+http://homebridge.local:51849/doorbell/ring
+```
+
+### What the iOS app does
+
+- uses the device camera for live preview
+- shows a large ring button
+- forwards ring events to Homebridge when the webhook URL is configured
+
+### What the iOS app does not do
+
+- it does not appear in Apple Home as its own camera accessory
+- it does not replace Homebridge for HomeKit publishing
+
+If you want the app’s camera feed to appear inside Home as a real HomeKit camera/doorbell stream, that is a larger follow-up project and would need a camera-capable bridge path rather than just a ring webhook.
+
 ## End-to-End Usage
 
 ### To Test the Physical Doorbell
@@ -325,6 +408,16 @@ When the switch tile is turned on:
 4. The firmware sends a doorbell event.
 
 ### To Test the Digital Doorbell
+
+Using the iOS app:
+
+1. Make sure Homebridge is running with the plugin loaded.
+2. Set the app’s webhook URL to the Homebridge endpoint.
+3. Open the iOS app.
+4. Tap the ring button.
+5. The app uses its own camera for preview and forwards the ring event to HomeKit through Homebridge.
+
+Using the Home app switch tile:
 
 1. Make sure Homebridge is running with the plugin loaded.
 2. Open the `Home` app.
@@ -378,6 +471,21 @@ again, then restart Homebridge.
 - restart Homebridge
 - check the Homebridge logs for plugin startup errors
 
+### iOS app rings locally but not in HomeKit
+
+Check:
+
+- the app webhook URL points to the Homebridge machine and correct port/path
+- the plugin config enables the webhook
+- the iPhone can reach the Homebridge host on the local network
+- Homebridge logs show the webhook listener started
+
+Expected default endpoint:
+
+```text
+http://homebridge.local:51849/doorbell/ring
+```
+
 ## Source References
 
 Firmware and HomeKit library:
@@ -397,3 +505,9 @@ HAP-NodeJS:
 
 - https://developers.homebridge.io/HAP-NodeJS/classes/Service.html
 - https://developers.homebridge.io/HAP-NodeJS/classes/Characteristic.html
+
+Apple frameworks:
+
+- https://developer.apple.com/documentation/avfoundation/avcapturevideopreviewlayer
+- https://developer.apple.com/documentation/bundleresources/information-property-list/nscamerausagedescription
+- https://developer.apple.com/documentation/bundleresources/information-property-list/nslocalnetworkusagedescription

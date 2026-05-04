@@ -1,0 +1,5 @@
+.derivedData/
+.tuist-cache/
+.tuist-state/
+**/xcuserdata/
+

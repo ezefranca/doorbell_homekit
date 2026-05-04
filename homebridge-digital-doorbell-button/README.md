@@ -4,8 +4,9 @@ Minimal Homebridge plugin that exposes:
 
 - a tappable `Switch` tile in Apple Home
 - a separate virtual `Doorbell` accessory
+- a local webhook endpoint for the native iOS app in this repository
 
-When the switch tile is turned on, the plugin sends a HomeKit `PROGRAMMABLE_SWITCH_EVENT` single-press notification on the virtual doorbell, then automatically turns the switch back off.
+When the switch tile is turned on, or when the webhook receives a local request, the plugin sends a HomeKit `PROGRAMMABLE_SWITCH_EVENT` single-press notification on the virtual doorbell.
 
 ## What this is for
 
@@ -51,8 +52,20 @@ Add this to the `platforms` array in your Homebridge config:
   "name": "Digital Doorbell",
   "buttonName": "Digital Doorbell Button",
   "doorbellName": "Digital Doorbell Chime",
-  "autoOffMilliseconds": 1000
+  "autoOffMilliseconds": 1000,
+  "webhookEnabled": true,
+  "webhookHost": "0.0.0.0",
+  "webhookPort": 51849,
+  "webhookPath": "/doorbell/ring"
 }
+```
+
+## Default webhook endpoint
+
+With the default config, the native iOS app should POST to:
+
+```text
+http://homebridge.local:51849/doorbell/ring
 ```
 
 ## How it appears in Home
@@ -62,11 +75,13 @@ Add this to the `platforms` array in your Homebridge config:
 
 Turning on the switch tile triggers the doorbell event and the tile resets back to off automatically.
 
+Calling the webhook triggers the same doorbell event, which is how the iOS app forwards its button press into HomeKit.
+
 ## Notes
 
 - This plugin is intentionally local and minimal. It does not call the ESP8266 directly.
 - The user-facing behavior is the same HomeKit-side effect as pressing the Flash button in the Arduino sketch: a single doorbell press event.
-- If you later want Homebridge to call the ESP8266 over HTTP as well, this plugin can be extended with a webhook option.
+- The iOS app uses its own camera locally; the plugin only bridges the ring event into HomeKit.
 
 ## Sources used
 
